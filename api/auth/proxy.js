@@ -1,3 +1,3 @@
-module.exports = async (req, res) => {
-  res.status(200).json({ ok: true, url: req.url });
+module.exports = (req, res) => {
+  res.json({ ok: true });
 };
