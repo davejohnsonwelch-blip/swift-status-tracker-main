@@ -8,11 +8,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "builds": [
-    {
-      "src": "api/auth/[[...path]].ts",
-      "use": "@vercel/node"
-    }
   ]
 }
