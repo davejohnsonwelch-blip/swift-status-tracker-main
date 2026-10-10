@@ -3,11 +3,10 @@
     {
       "source": "/api/auth/(.*)",
       "destination": "/api/auth/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "api/auth/[[...path]].ts": {
-      "runtime": "@vercel/node@18.x"
-    }
-  }
+  ]
 }
