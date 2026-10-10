@@ -48,7 +48,9 @@ const AdminLogin = () => {
           toast.error(error.message);
         } else {
           toast.success("Signed in successfully");
-          window.location.href = "/admin/dashboard";
+          setTimeout(() => {
+            window.location.href = "/admin/dashboard";
+          }, 500);
         }
       }
     } finally {
