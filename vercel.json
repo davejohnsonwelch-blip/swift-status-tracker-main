@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/auth/proxy.js": {
-      "runtime": "@vercel/node@20.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/auth/(.*)",
