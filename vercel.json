@@ -1,4 +1,10 @@
 {
+  "builds": [
+    {
+      "src": "api/auth/proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/auth/(.*)",
