@@ -1,12 +1,26 @@
 {
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/auth/(.*)",
-      "destination": "/api/auth/proxy?path=$1"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "api/auth/proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/auth/(.*)",
+      "dest": "/api/auth/proxy"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "status": 200
     }
   ]
 }

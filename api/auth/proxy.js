@@ -1,22 +1,42 @@
-export default async (req, res) => {
-  const urls = [
-    "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth/get-session",
-    "https://ep-super-dawn-b5tkweht.neon.tech/neondb/auth/get-session",
-    "https://ep-super-dawn-b5tkweht.api.neon.tech/v1/organizations",
-    "https://httpbin.org/get",
-    "https://google.com",
-  ];
+module.exports = async (req, res) => {
+  try {
+    const { handleAuthProxyRequest } = await import("@neondatabase/auth/server");
 
-  const results = {};
-  for (const u of urls) {
-    try {
-      const r = await fetch(u, { method: "GET", redirect: "manual" });
-      const body = await r.text();
-      results[u] = { status: r.status, bodyLen: body.length };
-    } catch (e) {
-      results[u] = { error: e.message };
+    const url = new URL(req.url, "http://localhost");
+    const path = url.pathname.replace(/^\/api\/auth\//, "");
+    const params = url.searchParams;
+    const queryString = params.toString();
+
+    const NEON_AUTH_BASE_URL =
+      process.env.NEON_AUTH_BASE_URL ||
+      "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth";
+
+    const cookieSecret = process.env.NEON_AUTH_COOKIE_SECRET || "fallback-secret-key-for-dev";
+
+    const response = await handleAuthProxyRequest({
+      request: new Request(url, {
+        method: req.method,
+        headers: req.headers,
+      }),
+      path,
+      baseUrl: NEON_AUTH_BASE_URL,
+      cookieSecret,
+      sessionDataTtl: 21600,
+      domain: "swiftpaytracker.com",
+      sameSite: "Lax",
+      log: console,
+    });
+
+    for (const [key, value] of response.headers.entries()) {
+      if (key.toLowerCase() !== "transfer-encoding") {
+        res.setHeader(key, value);
+      }
     }
-  }
 
-  res.status(200).json(results);
+    const body = await response.text();
+    res.status(response.status).send(body);
+  } catch (error) {
+    console.error("Proxy error:", error);
+    res.status(200).json({ error: error.message });
+  }
 };
