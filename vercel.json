@@ -1,27 +1,17 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "builds": [
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "source": "/api/auth/(.*)",
+      "destination": "/api/auth/proxy?path=$1"
     },
     {
-      "src": "api/auth/proxy.js",
-      "use": "@vercel/node"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/auth/(.*)",
-      "dest": "/api/auth/proxy?path=$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/$1",
-      "status": 200
+  "functions": {
+    "api/auth/proxy.js": {
+      "runtime": "nodejs20.x"
     }
-  ]
+  }
 }
