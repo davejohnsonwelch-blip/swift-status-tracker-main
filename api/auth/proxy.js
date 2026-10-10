@@ -1,46 +1,5 @@
-import { request } from "https";
-
 const NEON_AUTH_BASE_URL =
   "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth";
-
-function proxyRequest(targetUrl, method, headers, body) {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(targetUrl);
-    const options = {
-      hostname: parsedUrl.hostname,
-      port: 443,
-      path: `${parsedUrl.pathname}${parsedUrl.search}`,
-      method: method || "GET",
-      headers: { ...headers, Host: parsedUrl.hostname },
-    };
-
-    const proxyReq = request(options, (proxyRes) => {
-      const responseHeaders = {};
-      for (const [key, value] of Object.entries(proxyRes.headers)) {
-        if (key.toLowerCase() !== "transfer-encoding") {
-          responseHeaders[key] = value;
-        }
-      }
-
-      const chunks = [];
-      proxyRes.on("data", (chunk) => chunks.push(chunk));
-      proxyRes.on("end", () => {
-        resolve({
-          status: proxyRes.statusCode || 500,
-          headers: responseHeaders,
-          body: Buffer.concat(chunks).toString(),
-        });
-      });
-    });
-
-    proxyReq.on("error", reject);
-
-    if (body) {
-      proxyReq.write(body);
-    }
-    proxyReq.end();
-  });
-}
 
 export default async (req, res) => {
   try {
@@ -61,8 +20,11 @@ export default async (req, res) => {
         }
       }
     }
-    headers["Content-Type"] =
-      req.headers["content-type"] || "application/json";
+    headers["Content-Type"] = req.headers["content-type"] || "application/json";
+    headers["Origin"] = req.headers.origin || "https://www.swiftpaytracker.com";
+    if (req.headers.cookie) {
+      headers["Cookie"] = req.headers.cookie;
+    }
 
     let body;
     if (req.method !== "GET" && req.method !== "HEAD") {
@@ -73,17 +35,21 @@ export default async (req, res) => {
       body = Buffer.concat(chunks).toString();
     }
 
-    const result = await proxyRequest(
-      targetUrl,
-      req.method || "GET",
+    const response = await fetch(targetUrl, {
+      method: req.method || "GET",
       headers,
-      body && body !== "{}" ? body : undefined
-    );
+      body: body && body !== "{}" ? body : undefined,
+      redirect: "manual",
+    });
 
-    for (const [key, value] of Object.entries(result.headers)) {
-      res.setHeader(key, value);
+    for (const [key, value] of response.headers.entries()) {
+      if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "content-encoding") {
+        res.setHeader(key, value);
+      }
     }
-    res.status(result.status).send(result.body);
+
+    const responseBody = await response.text();
+    res.status(response.status).send(responseBody);
   } catch (error) {
     console.error("Proxy error:", error);
     res.status(200).json({ error: error.message });
