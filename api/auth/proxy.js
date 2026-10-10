@@ -2,8 +2,8 @@ module.exports = async (req, res) => {
   const NEON_AUTH_BASE_URL = "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth";
 
   const url = new URL(req.url, "http://localhost");
-  const authPath = url.searchParams.get("p") || "";
-  url.searchParams.delete("p");
+  const authPath = url.searchParams.get("path") || "";
+  url.searchParams.delete("path");
   const queryString = url.search;
   const targetUrl = `${NEON_AUTH_BASE_URL}/${authPath}${queryString}`;
 
