@@ -1,8 +1,7 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/auth/(.*)",
-      "destination": "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth/$1"
-    }
+  "routes": [
+    { "src": "/api/auth/(.*)", "dest": "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
