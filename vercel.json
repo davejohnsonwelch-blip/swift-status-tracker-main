@@ -8,10 +8,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "api/auth/proxy.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  ]
 }
