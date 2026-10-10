@@ -1,10 +1,9 @@
-module.exports = async (req, res) => {
+async function handler(req, res) {
   try {
     const { handleAuthProxyRequest } = await import("@neondatabase/auth/server");
 
-    const url = new URL(req.url, "http://localhost");
+    const url = new URL(req.url || "/", "http://localhost");
     const path = url.searchParams.get("path") || "";
-    const queryString = "";
 
     const NEON_AUTH_BASE_URL =
       process.env.NEON_AUTH_BASE_URL ||
@@ -12,7 +11,7 @@ module.exports = async (req, res) => {
 
     const cookieSecret =
       process.env.NEON_AUTH_COOKIE_SECRET ||
-      "fallback-secret-key-for-dev-only-use-env-var";
+      "fallback-secret-key-for-dev-only";
 
     const fetchRequest = new Request(url, {
       method: req.method,
@@ -42,4 +41,6 @@ module.exports = async (req, res) => {
     console.error("Proxy error:", error);
     res.status(200).json({ error: error.message });
   }
-};
+}
+
+export default handler;
