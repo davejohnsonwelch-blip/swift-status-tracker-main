@@ -1,8 +1,6 @@
-const NEON_AUTH_BASE_URL =
-  process.env.NEON_AUTH_BASE_URL ||
-  "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth";
+module.exports = async (req, res) => {
+  const NEON_AUTH_BASE_URL = "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth";
 
-export default async function handler(req, res) {
   const url = new URL(req.url, "http://localhost");
   const pathParts = url.pathname.split("/").filter(Boolean);
   pathParts.shift();
@@ -50,4 +48,4 @@ export default async function handler(req, res) {
     console.error("Proxy error:", error);
     res.status(502).json({ error: "Proxy error", message: error.message });
   }
-}
+};
