@@ -8,36 +8,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = neon.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session ?? null);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => {
-            checkAdmin(session.user.id);
-          }, 0);
-        } else {
-          setIsAdmin(false);
-          setLoading(false);
-        }
-      }
-    );
-
-    neon.auth.getSession().then(({ data: { session } }) => {
-      setSession(session ?? null);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const checkAdmin = async (userId: string) => {
+  const checkAdmin = useCallback(async (userId: string | null) => {
+    if (!userId) {
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
     const { data } = await neon
       .from("user_roles")
       .select("role")
@@ -46,10 +22,38 @@ export function useAuth() {
       .maybeSingle();
     setIsAdmin(!!data);
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = neon.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session ?? null);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          checkAdmin(session.user.id);
+        } else {
+          checkAdmin(null);
+        }
+      }
+    );
+
+    neon.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        checkAdmin(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [checkAdmin]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await neon.auth.signInWithPassword({ email, password });
+    if (!error) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      neon.auth.getSession();
+    }
     return { error };
   }, []);
 
@@ -59,6 +63,10 @@ export function useAuth() {
       password,
       options: { emailRedirectTo: `${window.location.origin}/` },
     });
+    if (!error) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      neon.auth.getSession();
+    }
     return { error };
   }, []);
 

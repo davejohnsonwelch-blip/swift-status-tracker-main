@@ -3,45 +3,55 @@
 -- Consolidated from Supabase migrations
 -- ============================================================================
 
+-- 0. Helper function to generate a random public_id (replaces pgcrypto's gen_random_bytes)
+CREATE OR REPLACE FUNCTION public.generate_public_id()
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT lower(replace(gen_random_uuid()::text, '-', ''))
+$$;
+
 -- 1. Create app_role enum
-CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
+    CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+  END IF;
+END $$;
 
 -- 2. Create user_roles table
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
-  role app_role NOT NULL,
+  role public.app_role NOT NULL,
   UNIQUE (user_id, role)
 );
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
 -- 3. Create transfers table
-CREATE TABLE public.transfers (
+CREATE TABLE IF NOT EXISTS public.transfers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  public_id TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(8), 'hex'),
+  public_id TEXT NOT NULL UNIQUE DEFAULT public.generate_public_id(),
   sender_name TEXT NOT NULL,
   sender_reference TEXT,
   recipient_name TEXT NOT NULL,
   amount NUMERIC(20, 8) NOT NULL,
   currency TEXT NOT NULL DEFAULT 'USD',
   method TEXT NOT NULL CHECK (method IN ('bank', 'crypto')),
-  -- Bank fields
   bank_name TEXT,
   account_number TEXT,
   account_name TEXT,
   bank_country TEXT,
-  -- Crypto fields
   crypto_type TEXT,
   wallet_address TEXT,
   network TEXT,
   transaction_hash TEXT,
-  -- Fee fields
   fee_amount NUMERIC,
   fee_btc_address TEXT,
   fee_paid BOOLEAN NOT NULL DEFAULT false,
   fee_paid_at TIMESTAMPTZ,
   fee_note TEXT,
-  -- Status
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
   admin_notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -51,7 +61,7 @@ CREATE TABLE public.transfers (
 ALTER TABLE public.transfers ENABLE ROW LEVEL SECURITY;
 
 -- 4. Create transfer_timeline_events table
-CREATE TABLE public.transfer_timeline_events (
+CREATE TABLE IF NOT EXISTS public.transfer_timeline_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   transfer_id UUID REFERENCES public.transfers(id) ON DELETE CASCADE NOT NULL,
   step_name TEXT NOT NULL,
@@ -62,7 +72,9 @@ CREATE TABLE public.transfer_timeline_events (
 );
 ALTER TABLE public.transfer_timeline_events ENABLE ROW LEVEL SECURITY;
 
--- 5. Helper function: is_admin (uses Neon auth user ID from JWT)
+-- 5. Helper function: is_admin (uses Neon auth user ID from JWT claim)
+-- NOTE: auth.uid() is provided by Neon's built-in auth extension.
+-- Enable it in the Neon Console: Project → Branch → Auth → Enable Auth.
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -73,7 +85,10 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
-    WHERE user_id = COALESCE(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
+    WHERE user_id = COALESCE(
+      NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid,
+      '00000000-0000-0000-0000-000000000000'::uuid
+    )
       AND role = 'admin'
   )
 $$;
@@ -123,6 +138,7 @@ AS $$
 $$;
 
 -- 8. RLS Policies for user_roles (admin-only management)
+DROP POLICY IF EXISTS "Admins can manage user_roles" ON public.user_roles;
 CREATE POLICY "Admins can manage user_roles"
   ON public.user_roles FOR ALL
   TO authenticated
@@ -130,6 +146,7 @@ CREATE POLICY "Admins can manage user_roles"
   WITH CHECK (public.is_admin());
 
 -- 9. RLS Policies for transfers (admin-only management)
+DROP POLICY IF EXISTS "Admins can manage transfers" ON public.transfers;
 CREATE POLICY "Admins can manage transfers"
   ON public.transfers FOR ALL
   TO authenticated
@@ -137,6 +154,7 @@ CREATE POLICY "Admins can manage transfers"
   WITH CHECK (public.is_admin());
 
 -- 10. RLS Policies for transfer_timeline_events (admin-only management)
+DROP POLICY IF EXISTS "Admins can manage timeline events" ON public.transfer_timeline_events;
 CREATE POLICY "Admins can manage timeline events"
   ON public.transfer_timeline_events FOR ALL
   TO authenticated
@@ -150,7 +168,8 @@ GRANT SELECT ON public.transfers_public TO anon;
 GRANT EXECUTE ON FUNCTION public.get_timeline_by_public_id TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.transfer_timeline_events TO anon;
 
--- 12. Update trigger for transfers.updated_at
+-- 12. Update trigger for transfers.updated_at (drop if exists for idempotency)
+DROP TRIGGER IF EXISTS update_transfers_updated_at ON public.transfers;
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
