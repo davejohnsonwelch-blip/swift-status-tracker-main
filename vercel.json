@@ -1,8 +1,15 @@
 {
+  "builds": [
+    {
+      "src": "api/auth/proxy.js",
+      "use": "@vercel/node",
+      "config": { "maxDuration": 30 }
+    }
+  ],
   "routes": [
     {
       "src": "/api/auth/(.*)",
-      "dest": "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth/$1"
+      "dest": "/api/auth/proxy?path=$1"
     },
     {
       "src": "/(.*)",
