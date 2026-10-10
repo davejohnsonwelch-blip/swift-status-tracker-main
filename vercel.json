@@ -1,7 +1,18 @@
 {
   "routes": [
+    { "src": "/api/auth/(.*)", "dest": "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/$1" },
     { "handle": "filesystem" },
-    { "src": "/api/auth/(.*)", "method": "GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD", "dest": "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth/$1" },
-    { "src": "/.*", "dest": "/index.html" }
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/auth/:path*",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        }
+      ]
+    }
   ]
 }
