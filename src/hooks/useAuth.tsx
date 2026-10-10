@@ -49,13 +49,21 @@ export function useAuth() {
   }, [checkAdmin]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await neon.auth.signInWithPassword({ email, password });
-    if (!error) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      neon.auth.getSession();
+    const { error, data: { session } } = await neon.auth.signInWithPassword({ email, password });
+    if (!error && session) {
+      setUser(session.user);
+      setSession(session);
+      checkAdmin(session.user.id);
+    } else if (!error) {
+      const { data: { session: newSession } } = await neon.auth.getSession();
+      if (newSession?.user) {
+        setUser(newSession.user);
+        setSession(newSession);
+        checkAdmin(newSession.user.id);
+      }
     }
     return { error };
-  }, []);
+  }, [checkAdmin]);
 
   const signUp = useCallback(async (email: string, password: string) => {
     const { error } = await neon.auth.signUp({
@@ -75,5 +83,6 @@ export function useAuth() {
     setIsAdmin(false);
   }, []);
 
-  return { user, session, loading, isAdmin, signIn, signUp, signOut };
+    return { user, session, loading, isAdmin, signIn, signUp, signOut };
 }
+
