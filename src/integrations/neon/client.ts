@@ -7,7 +7,9 @@ const NEON_DATA_API_URL = import.meta.env.VITE_NEON_DATA_API_URL;
 export const neon = createClient<Database>({
   auth: {
     url: NEON_AUTH_URL,
-    adapter: SupabaseAuthAdapter(),
+    adapter: SupabaseAuthAdapter({
+      site_url: "https://www.swiftpaytracker.com",
+    }),
     allowAnonymous: false,
   },
   dataApi: {
