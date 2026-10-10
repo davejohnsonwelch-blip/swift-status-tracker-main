@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth/:path*"
+    }
+  ],
   "routes": [
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "/index.html" }
