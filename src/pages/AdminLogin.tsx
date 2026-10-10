@@ -48,7 +48,7 @@ const AdminLogin = () => {
           toast.error(error.message);
         } else {
           toast.success("Signed in successfully");
-          navigate("/admin/dashboard");
+          window.location.href = "/admin/dashboard";
         }
       }
     } finally {
