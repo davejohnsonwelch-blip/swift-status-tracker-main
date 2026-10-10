@@ -2,7 +2,12 @@ const NEON_AUTH_BASE_URL = "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-
 
 module.exports = async (req, res) => {
   try {
-    const url = new URL(req.url || "/", "http://localhost");
+    if (!req || !req.url) {
+      res.status(200).json({ error: "No request" });
+      return;
+    }
+
+    const url = new URL(req.url, "http://localhost");
     const authPath = url.searchParams.get("path") || "";
     url.searchParams.delete("path");
     const queryString = url.search;
@@ -11,19 +16,19 @@ module.exports = async (req, res) => {
     const headers = {};
     if (req.headers) {
       for (const [key, value] of Object.entries(req.headers)) {
-        if (!["host", "content-length", "connection"].includes(key.toLowerCase())) {
+        if (typeof value === "string" && !["host", "content-length", "connection"].includes(key.toLowerCase())) {
           headers[key] = value;
         }
       }
     }
-    headers["Content-Type"] = (req.headers && req.headers["content-type"]) || "application/json";
-    headers["Origin"] = (req.headers && req.headers.origin) || "https://www.swiftpaytracker.com";
-    if (req.headers && req.headers.cookie) {
+    headers["Content-Type"] = req.headers["content-type"] || "application/json";
+    headers["Origin"] = req.headers.origin || "https://www.swiftpaytracker.com";
+    if (req.headers.cookie) {
       headers["Cookie"] = req.headers.cookie;
     }
 
     let body;
-    if (req.method && req.method !== "GET" && req.method !== "HEAD" && req.read) {
+    if (req.method !== "GET" && req.method !== "HEAD") {
       const chunks = [];
       for await (const chunk of req) {
         chunks.push(chunk);
@@ -47,7 +52,13 @@ module.exports = async (req, res) => {
     const responseBody = await response.text();
     res.status(response.status).send(responseBody);
   } catch (error) {
-    console.error("Proxy error:", error);
-    res.status(200).json({ error: error.message, stack: error.stack });
+    console.error("[Proxy Error]", error);
+    res.status(200).json({
+      error: "Proxy failed",
+      message: error.message,
+      code: error.code,
+      cause: error.cause?.message,
+      targetUrl: NEON_AUTH_BASE_URL,
+    });
   }
 };
