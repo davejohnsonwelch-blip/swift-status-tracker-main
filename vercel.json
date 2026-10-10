@@ -2,11 +2,12 @@
   "rewrites": [
     {
       "source": "/api/auth/(.*)",
-      "destination": "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/api/auth/$1"
     }
-  ]
+  ],
+  "functions": {
+    "api/auth/[[...path]].ts": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }
