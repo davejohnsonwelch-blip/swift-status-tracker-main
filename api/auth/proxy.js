@@ -35,12 +35,29 @@ export default async (req, res) => {
       body = Buffer.concat(chunks).toString();
     }
 
-    const response = await fetch(targetUrl, {
-      method: req.method || "GET",
-      headers,
-      body: body && body !== "{}" ? body : undefined,
-      redirect: "manual",
-    });
+    let response;
+    try {
+      response = await fetch(targetUrl, {
+        method: req.method || "GET",
+        headers,
+        body: body && body !== "{}" ? body : undefined,
+        redirect: "manual",
+      });
+    } catch (fetchError) {
+      console.error("[Fetch error]", {
+        targetUrl,
+        error: fetchError.message,
+        cause: fetchError.cause?.message,
+        stack: fetchError.stack,
+      });
+      res.status(200).json({
+        error: "fetch failed",
+        targetUrl,
+        message: fetchError.message,
+        type: fetchError.constructor.name,
+      });
+      return;
+    }
 
     for (const [key, value] of response.headers.entries()) {
       if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "content-encoding") {
@@ -52,6 +69,10 @@ export default async (req, res) => {
     res.status(response.status).send(responseBody);
   } catch (error) {
     console.error("Proxy error:", error);
-    res.status(200).json({ error: error.message });
+    res.status(200).json({
+      error: error.message,
+      stack: error.stack,
+      type: error.constructor.name,
+    });
   }
 };
