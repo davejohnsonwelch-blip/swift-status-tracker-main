@@ -8,5 +8,10 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/auth/[[...path]].ts": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }

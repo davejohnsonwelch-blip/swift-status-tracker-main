@@ -1,16 +1,16 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-
 const NEON_AUTH_BASE_URL =
   process.env.NEON_AUTH_BASE_URL ||
   "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { path } = req.query;
-  const authPath = Array.isArray(path) ? path.join("/") : path || "";
-  const queryString = req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : "";
+export default async function handler(req, res) {
+  const url = new URL(req.url, "http://localhost");
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  pathParts.shift();
+  const authPath = pathParts.join("/");
+  const queryString = url.search;
   const targetUrl = `${NEON_AUTH_BASE_URL}/${authPath}${queryString}`;
 
-  const headers: Record<string, string> = {
+  const headers = {
     "Content-Type": req.headers["content-type"] || "application/json",
     Origin: req.headers.origin || "https://www.swiftpaytracker.com",
   };
@@ -19,10 +19,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     headers.Cookie = req.headers.cookie;
   }
 
-  let body: string | undefined;
+  let body;
   if (req.method !== "GET" && req.method !== "HEAD") {
-    body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
-    headers["Content-Type"] = req.headers["content-type"] || "application/json";
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    body = Buffer.concat(chunks).toString();
+    if (!body || body === "{}") body = undefined;
   }
 
   try {
@@ -42,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const responseBody = await response.text();
     res.status(response.status);
     res.send(responseBody);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Proxy error:", error);
     res.status(502).json({ error: "Proxy error", message: error.message });
   }
