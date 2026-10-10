@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/auth/(.*)",
-      "destination": "/api/auth/$1"
+      "destination": "/api/auth/proxy?p=$1"
     },
     {
       "source": "/(.*)",
