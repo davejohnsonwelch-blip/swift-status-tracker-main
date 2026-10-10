@@ -137,6 +137,17 @@ AS $$
   ORDER BY tte.step_order ASC;
 $$;
 
+-- Create roles if they don't exist (Neon doesn't have Supabase's predefined roles)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    CREATE ROLE anon;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    CREATE ROLE authenticated;
+  END IF;
+END $$;
+
 -- 8. RLS Policies for user_roles (admin-only management)
 DROP POLICY IF EXISTS "Admins can manage user_roles" ON public.user_roles;
 CREATE POLICY "Admins can manage user_roles"
