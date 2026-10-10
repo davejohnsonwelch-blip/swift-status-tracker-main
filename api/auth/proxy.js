@@ -6,10 +6,17 @@ export default async (req, res) => {
         "Content-Type": "application/json",
         Origin: "https://www.swiftpaytracker.com",
       },
+      redirect: "manual",
     });
     const text = await result.text();
     res.status(200).json({ status: result.status, body: text });
   } catch (error) {
-    res.status(200).json({ error: error.message, type: error.constructor.name });
+    const cause = error.cause || error;
+    res.status(200).json({
+      error: error.message,
+      type: error.constructor.name,
+      cause: cause.message,
+      code: cause.code,
+    });
   }
 };
