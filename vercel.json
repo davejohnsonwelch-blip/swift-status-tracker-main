@@ -1,10 +1,4 @@
 {
-  "builds": [
-    {
-      "src": "api/auth/proxy.js",
-      "use": "@vercel/node"
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/auth/(.*)",
@@ -14,5 +8,10 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/auth/proxy.js": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
