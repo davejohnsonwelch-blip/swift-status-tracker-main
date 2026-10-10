@@ -9,9 +9,10 @@
       "destination": "/index.html"
     }
   ],
-  "functions": {
-    "api/auth/[[...path]].ts": {
-      "runtime": "nodejs20.x"
+  "builds": [
+    {
+      "src": "api/auth/[[...path]].ts",
+      "use": "@vercel/node"
     }
-  }
+  ]
 }
