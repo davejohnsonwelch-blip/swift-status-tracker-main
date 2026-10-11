@@ -54,19 +54,16 @@ const TransferStatus = () => {
   const fetchData = useCallback(async () => {
     if (!publicId) return;
 
-     const { data: t, error } = await neon
-       .from("transfers_public")
-      .select("*")
-      .eq("public_id", publicId)
-      .maybeSingle();
+     const { data: t } = await neon
+       .rpc("get_transfer_by_public_id", { p_public_id: publicId });
 
-    if (error || !t) {
+    if (!t || t.length === 0) {
       setNotFound(true);
       setLoading(false);
       return;
     }
 
-    setTransfer(t as unknown as TransferPublic);
+    setTransfer(t[0] as unknown as TransferPublic);
 
     // Fetch timeline events via secure RPC function
      const { data: eventsData } = await neon

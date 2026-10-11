@@ -58,7 +58,7 @@ export const neon = createClient<Database>({
   auth: {
     url: NEON_AUTH_URL,
     adapter: SupabaseAuthAdapter(),
-    allowAnonymous: false,
+    allowAnonymous: true,
   },
   dataApi: {
     url: NEON_DATA_API_URL,

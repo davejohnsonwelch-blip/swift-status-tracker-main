@@ -156,6 +156,7 @@ export type Database = {
     Views: {
       transfers_public: {
         Row: {
+          account_number: string | null
           account_number_masked: string | null
           amount: number | null
           bank_country: string | null
@@ -243,6 +244,16 @@ export type Database = {
           from: "*"
           to: "transfer_timeline_events"
           isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_transfer_by_public_id: {
+        Args: { p_public_id: string }
+        Returns: Database["public"]["Views"]["transfers_public"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "transfers_public"
+          isOneToOne: true
           isSetofReturn: true
         }
       }

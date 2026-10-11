@@ -73,8 +73,10 @@ CREATE TABLE IF NOT EXISTS public.transfer_timeline_events (
 ALTER TABLE public.transfer_timeline_events ENABLE ROW LEVEL SECURITY;
 
 -- 5. Helper function: is_admin (uses Neon auth user ID from JWT claim)
--- NOTE: auth.uid() is provided by Neon's built-in auth extension.
--- Enable it in the Neon Console: Project → Branch → Auth → Enable Auth.
+-- NOTE: Neon Data API validates JWTs via the pg_session_jwt extension, which
+-- exposes the authenticated user id as auth.uid() / auth.user_id() in the
+-- `auth` schema. The PostgREST-compatible `request.jwt.claim.sub` setting is
+-- NOT populated in JWK mode, so it is only kept as a fallback.
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -86,6 +88,7 @@ AS $$
     SELECT 1
     FROM public.user_roles
     WHERE user_id = COALESCE(
+      auth.uid(),
       NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid,
       '00000000-0000-0000-0000-000000000000'::uuid
     )
