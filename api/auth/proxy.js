@@ -19,6 +19,13 @@ async function handler(req, res) {
     const path = url.searchParams.get("path") || "";
     url.searchParams.delete("path");
 
+    // Bypass the proxy's session cookie cache so get-session always hits the
+    // upstream Neon auth server. Only the upstream response carries the
+    // `set-auth-jwt` header that the SPA needs to authorize Data API requests.
+    if (path === "get-session") {
+      url.searchParams.set("disableCookieCache", "true");
+    }
+
     const NEON_AUTH_BASE_URL =
       process.env.NEON_AUTH_BASE_URL ||
       "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth";
