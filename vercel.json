@@ -11,6 +11,7 @@
     }
   ],
   "routes": [
+    { "handle": "filesystem" },
     {
       "src": "/api/auth/(.+)",
       "dest": "/api/auth/proxy?path=$1"
