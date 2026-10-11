@@ -1,8 +1,8 @@
 import { createClient, SupabaseAuthAdapter } from "@neondatabase/neon-js";
 import type { Database } from "./types";
 
-const NEON_AUTH_URL = import.meta.env.VITE_NEON_AUTH_URL;
-const NEON_DATA_API_URL = import.meta.env.VITE_NEON_DATA_API_URL;
+export const NEON_AUTH_URL = import.meta.env.VITE_NEON_AUTH_URL;
+export const NEON_DATA_API_URL = import.meta.env.VITE_NEON_DATA_API_URL;
 
 const NEON_AUTH_ORIGIN = (() => {
   try {

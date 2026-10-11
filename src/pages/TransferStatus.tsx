@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { neon } from "@/integrations/neon/client";
+import { publicNeon } from "@/integrations/neon/anonymousClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Copy, HelpCircle } from "lucide-react";
@@ -54,7 +54,7 @@ const TransferStatus = () => {
   const fetchData = useCallback(async () => {
     if (!publicId) return;
 
-     const { data: t } = await neon
+     const { data: t } = await publicNeon
        .rpc("get_transfer_by_public_id", { p_public_id: publicId });
 
     if (!t || t.length === 0) {
@@ -66,7 +66,7 @@ const TransferStatus = () => {
     setTransfer(t[0] as unknown as TransferPublic);
 
     // Fetch timeline events via secure RPC function
-     const { data: eventsData } = await neon
+     const { data: eventsData } = await publicNeon
        .rpc("get_timeline_by_public_id", { p_public_id: publicId });
 
     setEvents((eventsData || []) as TimelineEvent[]);
