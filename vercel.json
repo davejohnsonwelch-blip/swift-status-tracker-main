@@ -7,7 +7,7 @@
     },
     {
       "src": "api/auth/proxy.js",
-      "use": "@vercel/node@32.x"
+      "use": "@vercel/node@23.x"
     }
   ],
   "routes": [
