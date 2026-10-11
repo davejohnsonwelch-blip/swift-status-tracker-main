@@ -15,3 +15,10 @@ as $$
 $$;
 
 grant execute on function public.get_transfer_by_public_id(text) to anon, authenticated;
+
+-- PostgREST (the Neon Data API) only exposes an RPC function to a role when
+-- that role can read its return type. Without these grants the function is
+-- hidden from authenticated users (404), even though the anonymous role works.
+grant select on public.transfers_public to anon, authenticated;
+grant select on public.transfer_timeline_events to anon, authenticated;
+grant execute on function public.get_timeline_by_public_id(text) to anon, authenticated;
