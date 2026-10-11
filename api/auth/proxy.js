@@ -7,7 +7,7 @@ async function handler(req, res) {
 
     const NEON_AUTH_BASE_URL =
       process.env.NEON_AUTH_BASE_URL ||
-      "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.te/neondb/auth";
+      "https://ep-super-dawn-b5tkweht.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth";
 
     const cookieSecret =
       process.env.NEON_AUTH_COOKIE_SECRET ||
