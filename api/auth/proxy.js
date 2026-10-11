@@ -4,6 +4,7 @@ async function handler(req, res) {
 
     const url = new URL(req.url || "/", "http://localhost");
     const path = url.searchParams.get("path") || "";
+    url.searchParams.delete("path");
 
     const NEON_AUTH_BASE_URL =
       process.env.NEON_AUTH_BASE_URL ||

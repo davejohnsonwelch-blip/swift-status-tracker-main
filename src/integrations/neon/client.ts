@@ -12,19 +12,37 @@ const NEON_AUTH_ORIGIN = (() => {
   }
 })();
 
+const NEON_AUTH_BASE_PATH = (() => {
+  try {
+    return new URL(NEON_AUTH_URL).pathname.replace(/\/+$/, "");
+  } catch {
+    return "";
+  }
+})();
+
+function toProxyPath(parsed: URL): string {
+  let pathname = parsed.pathname;
+  if (
+    NEON_AUTH_BASE_PATH &&
+    (pathname === NEON_AUTH_BASE_PATH || pathname.startsWith(`${NEON_AUTH_BASE_PATH}/`))
+  ) {
+    pathname = pathname.slice(NEON_AUTH_BASE_PATH.length);
+  }
+  if (!pathname.startsWith("/")) pathname = `/${pathname}`;
+  return `/api/auth${pathname}${parsed.search}`;
+}
+
 if (typeof window !== "undefined" && NEON_AUTH_ORIGIN) {
   const originalFetch = window.fetch;
   window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
     let rewritten: RequestInfo | URL = input;
 
     if (typeof input === "string" && input.startsWith(NEON_AUTH_ORIGIN)) {
-      rewritten = "/api/auth" + input.slice(NEON_AUTH_ORIGIN.length);
+      rewritten = toProxyPath(new URL(input));
     } else if (input instanceof URL && input.origin === NEON_AUTH_ORIGIN) {
-      rewritten = new URL("/api/auth" + input.pathname + input.search, window.location.origin);
+      rewritten = new URL(toProxyPath(input), window.location.origin);
     } else if (input instanceof Request && new URL(input.url).origin === NEON_AUTH_ORIGIN) {
-      const parsed = new URL(input.url);
-      const newUrl = "/api/auth" + parsed.pathname + parsed.search;
-      rewritten = new Request(newUrl, {
+      rewritten = new Request(toProxyPath(new URL(input.url)), {
         method: input.method,
         headers: input.headers,
         body: input.body,
